@@ -30,6 +30,12 @@ def dct_1d_fast(values: np.ndarray) -> np.ndarray:
     return dct(np.asarray(values, dtype=float), type=2, norm="ortho")
 
 
+def dct_1d_homemade(values: np.ndarray) -> np.ndarray:
+    """Compute the 1D DCT with explicit matrix multiplication."""
+    values = np.asarray(values, dtype=float)
+    return compute_dct_matrix(values.size) @ values
+
+
 def dct_2d_homemade(block: np.ndarray) -> np.ndarray:
     """Compute a 2D DCT with explicit matrix multiplication."""
     data = _as_square_float_matrix(block)
