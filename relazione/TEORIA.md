@@ -327,9 +327,10 @@ zig-zag + una matrice di quantizzazione, più sofisticata), ma cattura l'idea
 essenziale.
 
 **I due estremi:**
-- `d = 0` → azzero **tutto**. La IDCT di un solo coefficiente nullo... anzi di
-  tutti zero dà il valore medio (zero, ma poi saturato). In pratica l'immagine
-  diventa **grigio uniforme** = media del blocco.
+- `d = 0` → azzero **tutto**, inclusa la continua `c_{0,0}`. La IDCT di un
+  blocco di soli zeri è zero → dopo clip/arrotondamento l'immagine diventa
+  **nera**. (È con `d = 1`, che tiene solo `c_{0,0}`, che ogni blocco collassa
+  al suo **valore medio** → grigio uniforme a blocchi.)
 - `d = 2F-2` → tengo **tutto tranne** `c_{F-1,F-1}` (l'angolo in basso a destra
   = la singola frequenza massima). Taglio minimo possibile.
 
@@ -497,11 +498,14 @@ indipendentemente, i bordi fra blocchi possono non combaciare perfettamente
 dopo la ricostruzione, specialmente a d piccolo. Si vede come una griglia
 fantasma sull'immagine. È l'altro artefatto tipico del JPEG, oltre al Gibbs.
 
-**Invarianza della scacchiera a F=8.** Le scacchiere 20×20, 40×40, ...,
-640×640 danno PSNR identici a F=8. Perché? Il pattern ha celle di lato
-divisibile per 8, quindi **ogni blocco 8×8 è identico** → stessa DCT → stesso
-taglio → stesso PSNR. A F=16 e F=32 il rapporto periodo/celle cambia, e i
-valori differiscono leggermente.
+**Invarianza della scacchiera a F=8.** Le scacchiere con lato multiplo di 40
+(40×40, 80×80, ..., 640×640) danno PSNR identici a F=8. Perché? Le celle sono
+10×10 px; poiché lcm(8,10)=40, la disposizione dei blocchi 8×8 rispetto alla
+griglia delle celle si ripete con periodo 40, quindi ogni immagine di lato
+multiplo di 40 contiene **la stessa distribuzione di blocchi** → stesso PSNR. La
+20×20 fa eccezione: a F=8 è di fatto 16×16 e cattura solo una sotto-finestra del
+periodo. A F=16 e F=32 i periodi diventano lcm(16,10)=80 e lcm(32,10)=160,
+perciò cambiano le risoluzioni che coincidono.
 
 > **Collegamento al codice.** Tutto questo si osserva nei CSV
 > `results/examples/*_metrics.csv` e nelle griglie generate da
@@ -592,10 +596,11 @@ significative (buona concentrazione di energia) ma abbastanza piccolo da
 confinare gli artefatti e tenere il costo basso. È lo standard JPEG.
 
 **D: Cosa succede con d=0?**
-R: La maschera è tutta False → azzero tutti i coefficienti. La IDCT di una
-matrice di zeri è zero, ma dopo clip/arrotondamento... in realtà il blocco
-diventa nero (0) o, se si tenesse solo c_{0,0}, il valore medio. Con d=0
-l'immagine collassa al valore medio di ogni blocco → grigio uniforme a blocchi.
+R: La maschera è tutta False → azzero **tutti** i coefficienti, compresa la
+componente continua c_{0,0}. La IDCT di una matrice di zeri è zero, quindi dopo
+clip/arrotondamento ogni blocco diventa **nero** (0) e l'intera immagine è nera.
+Per ottenere il valore medio di ogni blocco (grigio uniforme a blocchi) serve
+**d=1**, che conserva il solo c_{0,0}.
 
 **D: Il PSNR può essere infinito?**
 R: Sì, quando MSE=0, cioè la ricostruzione è identica all'originale (in

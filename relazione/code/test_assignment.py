@@ -7,6 +7,7 @@ import numpy as np
 from dct_utils import (
     compress_image_array,
     dct_1d_fast,
+    dct_1d_homemade,
     dct_2d_fast,
     dct_2d_homemade,
     frequency_keep_mask,
@@ -34,6 +35,12 @@ PDF_BLOCK = np.array(
 def test_dct_1d_matches_pdf_row_example() -> None:
     expected = np.array([4.01e2, 6.60e0, 1.09e2, -1.12e2, 6.54e1, 1.21e2, 1.16e2, 2.88e1])
     actual = dct_1d_fast(PDF_BLOCK[0])
+    assert np.allclose(actual, expected, rtol=8e-3, atol=0.8)
+
+
+def test_homemade_dct_1d_matches_pdf_row_example() -> None:
+    expected = np.array([4.01e2, 6.60e0, 1.09e2, -1.12e2, 6.54e1, 1.21e2, 1.16e2, 2.88e1])
+    actual = dct_1d_homemade(PDF_BLOCK[0])
     assert np.allclose(actual, expected, rtol=8e-3, atol=0.8)
 
 
@@ -158,6 +165,7 @@ def test_default_benchmark_sizes_cover_large_matrices() -> None:
 
 if __name__ == "__main__":
     test_dct_1d_matches_pdf_row_example()
+    test_homemade_dct_1d_matches_pdf_row_example()
     test_dct_2d_matches_pdf_block_example()
     test_homemade_dct_2d_matches_fast_dct_2d()
     test_idct_2d_reconstructs_original_matrix()

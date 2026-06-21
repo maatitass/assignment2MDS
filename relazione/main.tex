@@ -198,11 +198,13 @@ deve essere trasformata, dalla DCT monodimensionale, in
 Il confronto numerico, implementato in \texttt{test\_assignment.py}, dà i
 seguenti risultati, riassunti nella Tabella~\ref{tab:validazione}:
 \begin{itemize}
-  \item \emph{custom} vs \texttt{scipy.fft} (\texttt{norm='ortho'}): errore
-        massimo $\sim 10^{-13}$ (precisione di macchina);
-  \item \emph{custom/fast} vs tabella della traccia: errore massimo dell'ordine
-        dell'unità sulla terza cifra significativa, dovuto all'arrotondamento a
-        $3$ cifre sui valori di riferimento;
+  \item \emph{custom} vs \emph{fast} (entrambe con \texttt{norm='ortho'}): le due
+        implementazioni coincidono a meno della precisione di macchina (errori
+        dell'ordine di $10^{-12}$), ampiamente entro la soglia $10^{-10}$ usata
+        nei test;
+  \item \emph{custom} e \emph{fast} vs tabella della traccia: errore massimo
+        dell'ordine dell'unità sulla terza cifra significativa, dovuto
+        all'arrotondamento a $3$ cifre sui valori di riferimento;
   \item round-trip $\mathrm{IDCT2}(\mathrm{DCT2}(A)) = A$ accurato a meno di
         $10^{-13}$, come ci si attende da una trasformazione ortogonale.
 \end{itemize}
@@ -216,10 +218,10 @@ seguenti risultati, riassunti nella Tabella~\ref{tab:validazione}:
 Test & Confronto & Errore massimo \\
 \midrule
 DCT 1D, riga $1\times 8$  & custom vs traccia      & $\sim 1$ su $3^a$ cifra \\
-DCT 1D, riga $1\times 8$  & custom vs scipy.fft    & $\sim 10^{-13}$ \\
-DCT 2D, blocco $8\times 8$& custom vs traccia      & $\sim 1$ su $3^a$ cifra \\
-DCT 2D, blocco $8\times 8$& custom vs fast         & $\sim 10^{-13}$ \\
-Round-trip IDCT2(DCT2(A)) & ricostruzione vs $A$   & $\sim 10^{-13}$ \\
+DCT 1D, riga $1\times 8$  & fast vs traccia        & $\sim 1$ su $3^a$ cifra \\
+DCT 2D, blocco $8\times 8$& fast vs traccia        & $\sim 1$ su $3^a$ cifra \\
+DCT 2D, blocco $8\times 8$& custom vs fast         & $<10^{-10}$ \\
+Round-trip IDCT2(DCT2(A)) & ricostruzione vs $A$   & $<10^{-10}$ \\
 Maschera $k+\ell<d$, $F=4$& confronto con atteso   & esatto (bool) \\
 \bottomrule
 \end{tabular}
@@ -326,10 +328,13 @@ $d=2F-2$ si conserva tutto tranne $c_{F-1,F-1}$.}
 
 I due valori estremi della soglia $d$ corrispondono a:
 \begin{itemize}
-  \item $d=0$: tutti i coefficienti del blocco vengono azzerati (l'immagine
-        ricomposta è grigio uniforme, al valore medio del blocco);
+  \item $d=0$: tutti i coefficienti del blocco vengono azzerati, inclusa la
+        componente continua $c_{0,0}$; poiché la IDCT di un blocco nullo è
+        nulla, l'immagine ricomposta diventa \emph{nera}. È invece con $d=1$
+        (che conserva il solo $c_{0,0}$) che ogni blocco collassa al proprio
+        valore medio, dando un'immagine a blocchi di grigio uniforme;
   \item $d=2F-2$: si conserva ogni coefficiente tranne $c_{F-1,F-1}$ (il
-        singolo coefficiente in alto a destra in frequenza).
+        singolo coefficiente in basso a destra, la frequenza massima).
 \end{itemize}
 Il numero di coefficienti conservati, e quindi la frazione di informazione
 mantenuta, dipende solo da $F$ e $d$ e vale
@@ -351,7 +356,7 @@ $F=8$ & & \multicolumn{4}{c}{$d$} & & $F=16$ & \multicolumn{4}{c}{$d$} \\
 \cmidrule{3-6}\cmidrule{8-11}
  & & 2 & 5 & 8 & 14 & & & 4 & 10 & 20 & 30 \\
 \midrule
-tenuti     & & 3 & 15 & 36 & 63 & & tenuti     & 10 & 55 & 191 & 256 \\
+tenuti     & & 3 & 15 & 36 & 63 & & tenuti     & 10 & 55 & 190 & 255 \\
 \%         & & 4.7 & 23.4 & 56.3 & 98.4 & & \% & 3.9 & 21.5 & 74.2 & 99.6 \\
 \bottomrule
 \end{tabular}
@@ -506,6 +511,17 @@ Wrapper di \texttt{scipy.fft.dct(..., type=2, norm='ortho')}.
   \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,)$, coefficienti DCT.
 \end{itemize}
 
+\paragraph{\texttt{dct\_1d\_homemade(values)}.}
+DCT monodimensionale \emph{custom}, calcolata come prodotto matrice--vettore
+$D\,v$ con $D$ la matrice ortonormale costruita da \texttt{compute\_dct\_matrix}.
+Serve a validare lo scaling sul caso test 1D della traccia (prima riga del
+blocco $8\times8$) e coincide con \texttt{dct\_1d\_fast} a meno della precisione
+di macchina.
+\begin{itemize}
+  \item \emph{Input}: \texttt{values} (array-like, shape $(N,)$).
+  \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,)$, coefficienti DCT.
+\end{itemize}
+
 \paragraph{\texttt{dct\_2d\_homemade(block)}.}
 DCT2 con prodotto matriciale esplicito $D\,f\,D^\top$ (costo $O(N^3)$).
 \begin{itemize}
@@ -546,6 +562,11 @@ Esegue l'intera procedura di compressione/decompressione blocco per blocco.
   \item \emph{Eccezioni}: \texttt{ValueError} se l'input non è 2D, se $F/d$
         non sono ammissibili, o se l'immagine è più piccola del blocco.
 \end{itemize}
+
+\paragraph{\texttt{compress\_image\_file(input\_path, output\_path, block\_size, cutoff)}.}
+Wrapper di comodo: carica un \texttt{.bmp}, lo comprime con
+\texttt{compress\_image\_array} e ne salva il risultato, restituendo la coppia
+\texttt{(original, compressed)}.
 
 \paragraph{\texttt{load\_bmp\_grayscale(path)} / \texttt{save\_grayscale\_image(path, image)}.}
 Caricano/salvano un'immagine \texttt{.bmp} in scala di grigi come array
@@ -700,21 +721,28 @@ $17.4$~dB.}
 
 \subsubsection{Confronto fra risoluzioni (scacchiere)}
 
-Le scacchiere ($20\times20$, $40\times40$, \dots, $640\times640$) mostrano
-valori identici sulle righe $F=8$: ciò avviene perché la scacchiera ha celle di
-lato divisore di $8$, dunque il pattern si ripete identico in ogni blocco
-$8\times8$. La Tabella~\ref{tab:checker} lo dimostra: le colonne $F=8$ sono
-identiche per tutte le risoluzioni. Le righe $F=16$ e $F=32$ presentano invece
-piccole differenze, perché cambia il rapporto fra periodo del pattern e
-dimensione del blocco. L'immagine $20\times20$ (in realtà $16\times16$) è più
-piccola del blocco $32\times32$: la configurazione $F=32$ non viene applicata
-(riportata come \texttt{--}). La Figura~\ref{fig:checker_res} mostra le
-scacchiere a tre risoluzioni affiancate.
+Le scacchiere hanno celle di $10\times10$ pixel. Poiché il lato della cella
+($10$) non divide quello del blocco ($8$), i blocchi $8\times8$ non coincidono
+con le celle; tuttavia la disposizione dei blocchi rispetto alla griglia delle
+celle è periodica con periodo $\mathrm{lcm}(8,10)=40$. Di conseguenza tutte le
+risoluzioni multiple di $40$ ($40,80,160,320,640$) contengono la stessa
+distribuzione di blocchi e danno PSNR identici a $F=8$, come mostra la
+Tabella~\ref{tab:checker}. Fa eccezione la $20\times20$: a $F=8$ viene di fatto
+ritagliata a $16\times16$ e cattura solo una sotto-finestra del periodo, perciò i
+suoi valori differiscono leggermente. Per $F=16$ e $F=32$ i periodi rilevanti
+diventano $\mathrm{lcm}(16,10)=80$ e $\mathrm{lcm}(32,10)=160$: cambiano dunque
+le risoluzioni che coincidono, ed è per questo che, nel set di dati completo, le
+righe $F=16$/$F=32$ non risultano più identiche a tutte le risoluzioni. Infine la
+$20\times20$ è più piccola del blocco $32\times32$, perciò la configurazione
+$F=32$ non viene applicata (riportata come \texttt{--}). La
+Figura~\ref{fig:checker_res} mostra le scacchiere a tre risoluzioni affiancate.
 
 \begin{table}[H]
 \centering
-\caption{PSNR [dB] sulle scacchiere a varie risoluzioni, $F=8$. I valori sono
-identici perché il pattern si ripete uguale in ogni blocco $8\times8$.}
+\caption{PSNR [dB] sulle scacchiere (celle $10\times10$) a varie risoluzioni,
+$F=8$. Le risoluzioni multiple di $40=\mathrm{lcm}(8,10)$ danno valori identici;
+la $20\times20$ (di fatto $16\times16$ a $F=8$) cattura solo una sotto-finestra
+del periodo e fa eccezione.}
 \label{tab:checker}
 \begin{tabular}{lrrrr}
 \toprule
@@ -746,23 +774,23 @@ perché le immagini naturali sono più localmente uniformi: all'interno di un
 blocco $8\times8$ tipico la variazione di intensità è quasi sempre piccola.
 La Tabella~\ref{tab:psnr} riporta i valori di PSNR selezionati; la
 Tabella~\ref{tab:dati} (in fondo, \emph{longtable}) riporta l'elenco completo
-di MSE, PSNR e percentuale di coefficienti mantenuti per ogni configururazione.
+di MSE, PSNR e percentuale di coefficienti mantenuti per ogni configurazione.
 Ad alto taglio ($d=14$ con $F=8$) tutte le foto reali superano $63$~dB
 (qualità eccellente), e anche al taglio più aggressivo ($d=2$, conservando solo
-il $4.7\%$ dei coefficienti) si mantengono tra $22$ e $30$~dB, una qualità
-ancora buona. Le Figure~\ref{fig:deer}--\ref{fig:tonypitony} mostrano le griglie
+il $4.7\%$ dei coefficienti) si mantengono tra $22$ e $31$~dB, una qualità
+ancora accettabile. Le Figure~\ref{fig:deer}--\ref{fig:tonypitony} mostrano le griglie
 di compressioni e i grafici di metriche per le foto reali.
 
 \begin{table}[H]
 \centering
 \caption{PSNR [dB] misurato sulle immagini al variare di $(F,d)$: foto reali
-(above) e rappresentative sintetiche (below).}
+(sopra) e immagini sintetiche rappresentative (sotto).}
 \label{tab:psnr}
 \small
 \begin{tabular}{lrrrrrr}
 \toprule
-& \multicolumn{3}{c}{$F=8$} & \multicolumn{1}{c}{$F=16$} & \multicolumn{1}{c}{$F=32$} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-5}\cmidrule(lr){6-6}
+& \multicolumn{4}{c}{$F=8$} & \multicolumn{2}{c}{$F=16$} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-7}
 Immagine & $d=2$ & $d=5$ & $d=8$ & $d=14$ & $d=10$ & $d=20$ \\
 \midrule
 deer       & 29.6 & 35.8 & 42.0 & 66.1 & 35.9 & 47.0 \\

@@ -223,40 +223,27 @@ def save_informative_plots(metrics: list[dict], path: Path, image_name: str) -> 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     
     # Plot 1: PSNR vs d (linee raggruppate per F)
+    # Plot 2: PSNR vs percentuale di coefficienti mantenuti (linee per F)
     for f in f_values:
         data_f = [m for m in metrics if m["F"] == f]
         data_f.sort(key=lambda x: x["d"])
-        
+
         ds = [m["d"] for m in data_f]
+        ratios = [m["compression_ratio"] * 100 for m in data_f]
         psnrs = [m["psnr"] for m in data_f]
-        
+
         ax1.plot(ds, psnrs, marker="o", label=f"F={f}")
-        
+        ax2.plot(ratios, psnrs, marker="s", label=f"F={f}")
+
     ax1.set_xlabel("Soglia di frequenza (d)")
     ax1.set_ylabel("PSNR (dB)")
     ax1.set_title("PSNR vs d")
     ax1.grid(True, linestyle="--", linewidth=0.5)
     ax1.legend()
-    
-    # Plot 2: PSNR vs F (linee raggruppate per livello di compressione)
-    level_data = {}
-    for f in f_values:
-        data_f = [m for m in metrics if m["F"] == f]
-        data_f.sort(key=lambda x: x["d"])
-        for i, m in enumerate(data_f):
-            if i not in level_data:
-                level_data[i] = []
-            level_data[i].append((f, m["psnr"]))
-            
-    for i in sorted(level_data.keys()):
-        level_data[i].sort(key=lambda x: x[0])
-        fs = [x[0] for x in level_data[i]]
-        psnrs = [x[1] for x in level_data[i]]
-        ax2.plot(fs, psnrs, marker="s", label=f"Livello compr. {i+1}")
-        
-    ax2.set_xlabel("Ampiezza blocco (F)")
+
+    ax2.set_xlabel("% coefficienti mantenuti")
     ax2.set_ylabel("PSNR (dB)")
-    ax2.set_title("PSNR vs F")
+    ax2.set_title("PSNR vs Tasso di Compressione")
     ax2.grid(True, linestyle="--", linewidth=0.5)
     ax2.legend()
     

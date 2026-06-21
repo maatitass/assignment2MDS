@@ -222,23 +222,25 @@ def save_informative_plots(metrics: list[dict], path: Path, image_name: str) -> 
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     
+    # Plot 1: PSNR vs d (linee raggruppate per F)
+    # Plot 2: PSNR vs percentuale di coefficienti mantenuti (linee per F)
     for f in f_values:
         data_f = [m for m in metrics if m["F"] == f]
         data_f.sort(key=lambda x: x["d"])
-        
+
         ds = [m["d"] for m in data_f]
-        psnrs = [m["psnr"] for m in data_f]
         ratios = [m["compression_ratio"] * 100 for m in data_f]
-        
+        psnrs = [m["psnr"] for m in data_f]
+
         ax1.plot(ds, psnrs, marker="o", label=f"F={f}")
         ax2.plot(ratios, psnrs, marker="s", label=f"F={f}")
-        
+
     ax1.set_xlabel("Soglia di frequenza (d)")
     ax1.set_ylabel("PSNR (dB)")
     ax1.set_title("PSNR vs d")
     ax1.grid(True, linestyle="--", linewidth=0.5)
     ax1.legend()
-    
+
     ax2.set_xlabel("% coefficienti mantenuti")
     ax2.set_ylabel("PSNR (dB)")
     ax2.set_title("PSNR vs Tasso di Compressione")
