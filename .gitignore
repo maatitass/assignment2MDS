@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 results/
 .matplotlib-cache/
+*.aux
+*.log
+*.out
+*.toc
