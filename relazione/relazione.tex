@@ -701,4 +701,181 @@ comprimono peggio. Il compromesso $F=8$ dello standard JPEG sta esattamente
 in mezzo, e i nostri esperimenti ne mostrano il perché.
 
 
+Il codice è documentato in modo sistematico: ogni modulo ha una \emph{docstring}
+di intestazione che ne descrive lo scopo, e ogni funzione pubblica ha una
+\emph{docstring} che ne specifica comportamento, argomenti (con tipo atteso),
+valore di ritorno ed eccezioni sollevate. Le convenzioni seguono lo stile
+\texttt{numpy}/PEP~257, con annotazioni di tipo (\emph{type hints}) sulle
+firme. Di seguito si riporta la documentazione funzione per funzione.
+
+\subsection{Modulo \texttt{dct\_utils.py}}
+
+\paragraph{\texttt{compute\_dct\_matrix(size)}.}
+Costruisce la matrice $D\in\mathbb{R}^{N\times N}$ della DCT2 ortonormale,
+definita da $D_{k,i}=\alpha_k\cos\!\bigl(k\pi(2i+1)/(2N)\bigr)$ con
+$\alpha_0=1/\sqrt{N}$ e $\alpha_k=\sqrt{2/N}$ per $k\ge 1$.
+\begin{itemize}
+  \item \emph{Input}: \texttt{size} (\texttt{int}) -- dimensione $N$.
+  \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,N)$, matrice ortogonale
+        ($D^{-1}=D^\top$).
+  \item \emph{Eccezioni}: \texttt{ValueError} se \texttt{size}$\le 0$.
+\end{itemize}
+
+\paragraph{\texttt{dct\_1d\_fast(values)}.}
+DCT monodimensionale fast con lo scaling richiesto dai test della traccia.
+Wrapper di \texttt{scipy.fft.dct(..., type=2, norm='ortho')}.
+\begin{itemize}
+  \item \emph{Input}: \texttt{values} (array-like, shape $(N,)$).
+  \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,)$, coefficienti DCT.
+\end{itemize}
+
+\paragraph{\texttt{dct\_1d\_homemade(values)}.}
+DCT monodimensionale \emph{custom}, calcolata come prodotto matrice--vettore
+$D\,v$ con $D$ la matrice ortonormale costruita da \texttt{compute\_dct\_matrix}.
+Serve a validare lo scaling sul caso test 1D della traccia (prima riga del
+blocco $8\times8$) e coincide con \texttt{dct\_1d\_fast} a meno della precisione
+di macchina.
+\begin{itemize}
+  \item \emph{Input}: \texttt{values} (array-like, shape $(N,)$).
+  \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,)$, coefficienti DCT.
+\end{itemize}
+
+\paragraph{\texttt{dct\_2d\_homemade(block)}.}
+DCT2 con prodotto matriciale esplicito $D\,f\,D^\top$ (costo $O(N^3)$).
+\begin{itemize}
+  \item \emph{Input}: \texttt{block} (array-like, shape $(N,N)$).
+  \item \emph{Output}: \texttt{numpy.ndarray}, shape $(N,N)$, coefficienti DCT2.
+  \item \emph{Eccezioni}: \texttt{ValueError} se l'input non è una matrice
+        quadrata.
+\end{itemize}
+
+\paragraph{\texttt{dct\_2d\_fast(block)} / \texttt{idct\_2d\_fast(coefficients)}.}
+DCT2 e IDCT2 fast via \texttt{scipy.fft.dctn}/\texttt{idctn} con
+\texttt{type=2, norm='ortho'}.
+\begin{itemize}
+  \item \emph{Input}: array 2D (shape $(N,N)$).
+  \item \emph{Output}: array 2D, trasformato / ricostruito.
+  \item \emph{Eccezioni}: \texttt{ValueError} se l'input non è bidimensionale.
+\end{itemize}
+
+\paragraph{\texttt{frequency\_keep\_mask(block\_size, cutoff)}.}
+Maschera booleana di taglio: \texttt{True} dove $k+\ell<d$ (conservato),
+\texttt{False} dove $k+\ell\ge d$ (azzerato). Costruita vettorialmente con
+\texttt{np.indices}.
+\begin{itemize}
+  \item \emph{Input}: \texttt{block\_size} (\texttt{int}, $=F$), \texttt{cutoff}
+        (\texttt{int}, $=d$).
+  \item \emph{Output}: \texttt{numpy.ndarray} di \texttt{bool}, shape $(F,F)$.
+  \item \emph{Eccezioni}: \texttt{ValueError} se $F\le 0$ o $d\notin[0,2F-2]$.
+\end{itemize}
+
+\paragraph{\texttt{compress\_image\_array(image, block\_size, cutoff)}.}
+Esegue l'intera procedura di compressione/decompressione blocco per blocco.
+\begin{itemize}
+  \item \emph{Input}: \texttt{image} (array 2D scala di grigi), \texttt{block\_size}
+        (\texttt{int}), \texttt{cutoff} (\texttt{int}).
+  \item \emph{Output}: tupla \texttt{(original, compressed)}: porzione
+        croppata dell'originale e immagine ricomposta, entrambe \texttt{uint8},
+        shape $(H_c,W_c)$ con $H_c=\lfloor H/F\rfloor F$, $W_c=\lfloor W/F\rfloor F$.
+  \item \emph{Eccezioni}: \texttt{ValueError} se l'input non è 2D, se $F/d$
+        non sono ammissibili, o se l'immagine è più piccola del blocco.
+\end{itemize}
+
+\paragraph{\texttt{compress\_image\_file(input\_path, output\_path, block\_size, cutoff)}.}
+Wrapper di comodo: carica un \texttt{.bmp}, lo comprime con
+\texttt{compress\_image\_array} e ne salva il risultato, restituendo la coppia
+\texttt{(original, compressed)}.
+
+\paragraph{\texttt{load\_bmp\_grayscale(path)} / \texttt{save\_grayscale\_image(path, image)}.}
+Caricano/salvano un'immagine \texttt{.bmp} in scala di grigi come array
+\texttt{uint8} 2D, via \texttt{Pillow}.
+\begin{itemize}
+  \item \emph{Eccezioni}: \texttt{ValueError} se il file non ha estensione
+        \texttt{.bmp}.
+\end{itemize}
+
+\paragraph{\texttt{time\_function(function, *args, repeats=3)}.}
+Misura il tempo di esecuzione di una funzione restituendo il \emph{minimo} su
+\texttt{repeats} chiamate (per ridurre il rumore), via
+\texttt{time.perf\_counter}.
+\begin{itemize}
+  \item \emph{Output}: \texttt{float}, tempo minimo in secondi.
+\end{itemize}
+
+\subsection{Modulo \texttt{run\_assignment.py}}
+
+\paragraph{\texttt{main()}.}
+Parsa gli argomenti da riga di comando, esegue il benchmark dei tempi (con
+\texttt{--size} ripetibile, \texttt{--repeats}) e, salvo \texttt{--no-examples},
+genera per ogni immagine una griglia di compressioni, un grafico di metriche e
+un CSV in \texttt{results/examples/}.
+
+\paragraph{\texttt{run\_benchmark(sizes, repeats)}.}
+Ciclo di misura: per ogni $N$ genera una matrice casuale $N\times N$ (seed
+fisso per riproducibilità), cronometra \texttt{dct\_2d\_homemade} e
+\texttt{dct\_2d\_fast} e restituisce le righe del CSV.
+
+\paragraph{\texttt{calculate\_metrics(original, compressed)}.}
+Calcola MSE e PSNR (dB) fra originale e compressa:
+$\mathrm{PSNR}=20\log_{10}(255/\sqrt{\mathrm{MSE}})$, con $\mathrm{PSNR}=\infty$
+se $\mathrm{MSE}=0$.
+
+\paragraph{\texttt{calculate\_compression\_ratio(block\_size, cutoff)}.}
+Restituisce la frazione di coefficienti conservati
+$n_{\text{kept}}/F^2$ tramite \texttt{frequency\_keep\_mask}.
+
+\paragraph{Funzioni di plotting.}
+\texttt{plot\_benchmark} (semilog-$y$ dei tempi), \texttt{save\_compression\_grid}
+(griglia delle immagini compresse con PSNR nei titoli),
+\texttt{save\_informative\_plots} (PSNR vs $d$ e PSNR vs \% coefficienti),
+\texttt{write\_image\_metrics\_csv} e \texttt{write\_benchmark\_csv}
+(serializzazione CSV).
+
+\subsection{Modulo \texttt{gui.py}}
+
+\paragraph{Classe \texttt{CompressionApp}.}
+Finestra principale; costruisce i widget (pulsante \emph{Scegli BMP}, caselle
+$F$ e $d$, pulsante \emph{Comprimi}, due canvas per originale/compressa) e gestisce
+gli eventi. Mantiene riferimenti alle \texttt{PhotoImage} per evitare la
+rimozione da parte del \emph{garbage collector}.
+
+\paragraph{Metodi principali.}
+\texttt{choose\_image} (apre il dialog di selezione e carica),
+\texttt{compress} (valida $F,d$, esegue \texttt{build\_compression\_preview},
+aggiorna le anteprime), \texttt{update\_parameter\_help} (suggerimenti live su
+$F$/$d$), \texttt{render\_previews}/\texttt{draw\_image} (disegno adattato al
+canvas).
+
+\paragraph{Funzioni ausiliarie.}
+\texttt{fit\_preview\_size(image\_size, available\_size)} (ridimensiona
+mantenendo le proporzioni entro l'area disponibile),
+\texttt{array\_to\_photo} (array $\to$ \texttt{PhotoImage}),
+\texttt{load\_original\_preview}, \texttt{build\_compression\_preview}
+(orchestra caricamento + compressione + messaggio di stato),
+\texttt{describe\_parameter\_hints} (calcola i testi di suggerimento sui limiti
+ammissibili di $F$ e $d$). Tutti gli errori (file non valido, $F/d$ non interi,
+$d$ fuori range, $F$ più grande dell'immagine) sono segnalati all'utente con
+\texttt{messagebox} senza arrestare il programma.
+
+
+\appendix
+\section{Codice sorgente}\label{app:codice}
+
+Di seguito si riporta il codice sorgente completo dei moduli principali del
+progetto. I file sono organizzati come descritto nella
+Sezione~\ref{sec:struttura}.
+
+\subsection{\texttt{dct\_utils.py}}
+\lstinputlisting[language=Python]{code/dct_utils.py}
+
+\subsection{\texttt{run\_assignment.py}}
+\lstinputlisting[language=Python]{code/run_assignment.py}
+
+\subsection{\texttt{gui.py}}
+\lstinputlisting[language=Python]{code/gui.py}
+
+\subsection{\texttt{test\_assignment.py}}
+\lstinputlisting[language=Python]{code/test_assignment.py}
+
+
 \end{document}
