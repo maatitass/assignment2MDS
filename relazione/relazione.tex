@@ -280,7 +280,7 @@ Le immagini di test si dividono in due famiglie:
 
 Per interpretare i risultati sperimentali ottenuti, ci siamo basati su due concetti teorici fondamentali. 
 
-Il primo principio è la \emph{concentrazione dell'energia}: in un segnale che si presenta sufficientemente regolare o `
+Il primo principio è la \emph{concentrazione dell'energia}: in un segnale che si presenta sufficientemente regolare o
 liscio, i coefficienti della DCT decadono in modo rapido. Di conseguenza, la quasi totalità dell'energia del segnale 
 si concentra nelle basse frequenze, localizzate tipicamente nell'angolo in alto a sinistra della matrice del blocco. 
 Poiché la trasformazione utilizzata è ortonormale, l'energia totale si conserva: pertanto,
@@ -312,7 +312,7 @@ ci troviamo di fronte a un segnale visivo estremamente regolare. Applicando la t
 a un blocco così uniforme, si ottiene uno spettro fortemente concentrato: la quasi 
 totalità delle informazioni si addensa nel coefficiente $c_{0,0}$ 
   (che rappresenta la luminosità media) e nel primo coefficiente direzionale. Di conseguenza, 
-  è prevedibile che il taglio delle alte frequenze lasci l'immagine sostanzialmente inalterata
+  è prevedibile che il taglio delle alte frequenze lasci l'immagine sostanzialmente inalterata.
 
 \begin{figure}[H]
 \centering
@@ -368,7 +368,7 @@ Questa configurazione rappresenta lo scenario opposto rispetto
  del fenomeno di Gibbs. Poiché i bordi costituiscono delle vere e proprie discontinuità visive, 
  la loro informazione non è concentrata, ma risulta distribuita su un ampio spettro di frequenze. 
  Di conseguenza, l'azzeramento delle frequenze più alte genera inevitabili distorsioni visive 
- attorno ai contorni originali
+ attorno ai contorni originali.
 
 \begin{figure}[H]
 \centering
@@ -489,7 +489,10 @@ mantenuti.}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \caption{Scacchiera, PSNR (dB) a paragone di tutte le risoluzioni testate,
-per $F=8$ e $F=32$. Le colonne sono il lato dell'immagine in pixel.}
+per $F=8$ e $F=32$. Le colonne sono il lato dell'immagine in pixel.
+Il simbolo ``---'' indica una configurazione non valida: l'immagine
+$20\times20$ è più piccola di un blocco $32\times32$ e quindi non ammette
+nemmeno un blocco completo.}
 \label{tab:scac}
 \begin{tabular}{rrrrrrrr}
 \toprule
@@ -500,10 +503,10 @@ $F$ & $d$ & $20$ & $40$ & $80$ & $160$ & $320$ & $640$ \\
 8  & 8  & 26.5 & 24.7 & 24.7 & 24.7 & 24.7 & 24.7 \\
 8  & 14 & 51.1 & 46.4 & 46.4 & 46.4 & 46.4 & 46.4 \\
 \midrule
-32 & 8  & 18.1 & 9.9  & 10.5 & 10.7 & 10.7 & 10.7 \\
-32 & 20 & 22.6 & 16.4 & 16.1 & 16.1 & 16.1 & 16.1 \\
-32 & 40 & 30.7 & 31.2 & 31.2 & 31.1 & 31.1 & 31.1 \\
-32 & 60 & 47.4 & 56.9 & 62.0 & 63.9 & 63.9 & 63.9 \\
+32 & 8  & --- & 9.9  & 10.5 & 10.7 & 10.7 & 10.7 \\
+32 & 20 & --- & 16.4 & 16.1 & 16.1 & 16.1 & 16.1 \\
+32 & 40 & --- & 31.2 & 31.2 & 31.1 & 31.1 & 31.1 \\
+32 & 60 & --- & 56.9 & 62.0 & 63.9 & 63.9 & 63.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -668,11 +671,11 @@ garantendo una convergenza più rapida verso la ricostruzione esatta.
 
 \subsection{Discussione comparativa}
 
-Riassumendo, i casi esaminati si disponcono su uno spettro di
+Riassumendo, i casi esaminati si dispongono su uno spettro di
 comprimibilità che riproduce esattamente la predizione teorica:
 
 \begin{itemize}
-  \item \textbf{Segnale lisce} (gradiente): spettro concentrato in pochi
+  \item \textbf{Segnale liscio} (gradiente): spettro concentrato in pochi
         coefficienti di bassa frequenza. PSNR già altissimo a $d=2$ e
         lossless molto prima del massimo. La DCT è l'operatore ideale.
   \item \textbf{Discontinuità sparse} (fotografie reali, carattere
@@ -685,10 +688,10 @@ comprimibilità che riproduce esattamente la predizione teorica:
 \end{itemize}
 
 Due artefatti tipici, entrambi visibili negli esperimenti, completano il
-quadro. Il \emph{ringing} (Gibbs)compare sui bordi netti a bassa $d$, come
+quadro. Il \emph{ringing} (Gibbs) compare sui bordi netti a bassa $d$, come
 l'alone attorno alla C o ai contorni delle foto: è il prezzo del troncamento
 di una serie di Fourier su una discontinuità. L'\emph{effetto a blocchi}
-(blocking artifact)compare invece ai bordi \emph{tra} blocchi,
+(blocking artifact) compare invece ai bordi \emph{tra} blocchi,
 specialmente a $d$ piccolo, perché ogni blocco è processato in
 indipendenza e i suoi bordi possono non combaciare dopo la ricostruzione: si
 vede come una griglia fantasma sull'immagine. Blocchi più grandi rendono
