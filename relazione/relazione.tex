@@ -17,6 +17,35 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
+% Configurazione di listings per i sorgenti Python: gestione UTF-8 (caratteri
+% accentati nelle docstring e nei commenti) e stile leggibile.
+\definecolor{lstkeyword}{rgb}{0.0,0.0,0.6}
+\definecolor{lstcomment}{rgb}{0.25,0.5,0.35}
+\definecolor{lststring}{rgb}{0.6,0.1,0.1}
+\definecolor{lstnumbers}{rgb}{0.5,0.5,0.5}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{lstkeyword}\bfseries,
+  commentstyle=\color{lstcomment}\itshape,
+  stringstyle=\color{lststring},
+  numberstyle=\tiny\color{lstnumbers},
+  numbers=left,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  rulecolor=\color{black!30},
+  tabsize=4,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate=%
+    {à}{{\`a}}1 {è}{{\`e}}1 {é}{{\'e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+    {À}{{\`A}}1 {È}{{\`E}}1 {É}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+    {°}{{\textdegree}}1 {–}{{--}}1 {—}{{---}}1
+    {“}{{``}}1 {”}{{''}}1 {‘}{{`}}1 {’}{{'}}1 {…}{{\ldots}}1
+}
+
 \hypersetup{
   colorlinks=true,
   linkcolor=black,
@@ -701,6 +730,8 @@ comprimono peggio. Il compromesso $F=8$ dello standard JPEG sta esattamente
 in mezzo, e i nostri esperimenti ne mostrano il perché.
 
 
+\section{Documentazione del codice}\label{sec:doc}
+
 Il codice è documentato in modo sistematico: ogni modulo ha una \emph{docstring}
 di intestazione che ne descrive lo scopo, e ogni funzione pubblica ha una
 \emph{docstring} che ne specifica comportamento, argomenti (con tipo atteso),
@@ -862,8 +893,8 @@ $d$ fuori range, $F$ più grande dell'immagine) sono segnalati all'utente con
 \section{Codice sorgente}\label{app:codice}
 
 Di seguito si riporta il codice sorgente completo dei moduli principali del
-progetto. I file sono organizzati come descritto nella
-Sezione~\ref{sec:struttura}.
+progetto. La documentazione funzione per funzione dei singoli moduli è
+descritta nella Sezione~\ref{sec:doc}.
 
 \subsection{\texttt{dct\_utils.py}}
 \lstinputlisting[language=Python]{code/dct_utils.py}
