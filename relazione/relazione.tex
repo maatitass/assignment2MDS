@@ -16,6 +16,16 @@
 \usepackage{hyperref}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{microtype}
+
+% Evita che le righe lunghe sbordino dai margini: microtype riduce le
+% righe con l'espansione dei font, l'emergencystretch assorbe i residui e
+% i nomi di funzione in \texttt possono spezzarsi dopo l'underscore.
+\setlength{\emergencystretch}{3em}
+\makeatletter
+\let\@origtexttt\texttt
+\renewcommand{\texttt}[1]{{\def\_{\textunderscore\discretionary{}{}{}}\@origtexttt{#1}}}
+\makeatother
 
 \hypersetup{
   colorlinks=true,
@@ -23,6 +33,45 @@
   urlcolor=blue!60!black,
   citecolor=blue!60!black
 }
+
+% Stile per i listati Python: spezza le righe lunghe entro i margini e
+% gestisce i caratteri accentati (UTF-8) presenti nei sorgenti.
+\definecolor{codebg}{gray}{0.97}
+\definecolor{breakarrow}{rgb}{0.55,0,0}
+\lstdefinestyle{pyrelazione}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!45!black}\itshape,
+  stringstyle=\color{red!55!black},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakindent=0pt,
+  postbreak=\mbox{\textcolor{breakarrow}{$\hookrightarrow$}\space},
+  columns=fullflexible,
+  keepspaces=true,
+  tabsize=4,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{codebg},
+  framesep=4pt,
+  xleftmargin=16pt,
+  xrightmargin=4pt,
+  aboveskip=8pt,
+  belowskip=8pt,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate=%
+    {à}{{\`a}}1 {è}{{\`e}}1 {é}{{\'e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+    {À}{{\`A}}1 {È}{{\`E}}1 {É}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+    {’}{{\textquotesingle}}1 {‘}{{\textquotesingle}}1
+    {“}{{\textquotedblleft}}1 {”}{{\textquotedblright}}1
+}
+\lstset{style=pyrelazione}
 
 % Maschera di taglio DCT: verde = coefficiente tenuto, rosso = azzerato.
 % Argomenti: #1 = F (lato blocco), #2 = d (soglia, si tiene k+ell < d).
@@ -750,7 +799,7 @@ DCT2 con prodotto matriciale esplicito $D\,f\,D^\top$ (costo $O(N^3)$).
 \end{itemize}
 
 \paragraph{\texttt{dct\_2d\_fast(block)} / \texttt{idct\_2d\_fast(coefficients)}.}
-DCT2 e IDCT2 fast via \texttt{scipy.fft.dctn}/\texttt{idctn} con
+DCT2 e IDCT2 fast via \texttt{scipy.\allowbreak fft.\allowbreak dctn}/\allowbreak\texttt{idctn} con
 \texttt{type=2, norm='ortho'}.
 \begin{itemize}
   \item \emph{Input}: array 2D (shape $(N,N)$).
